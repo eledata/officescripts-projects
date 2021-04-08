@@ -1,60 +1,47 @@
-/**
- * This sample clears all of the hyperlink from the current worksheet. 
- * It traverses through the worksheet and if there is any hyperlink associated with the cell, it cleares the hyperlink and retains the cell value as is. 
- */
-function main(workbook: ExcelScript.Workbook, sheetName: string = 'Sheet1') {
+// 演示：如何去除表格中的超链接
+function main(workbook: ExcelScript.Workbook) {
+  // 遍历文件中所有的sheet
+  let sheets = workbook.getWorksheets();
 
-  // Get the active worksheet. 
-  let sheet = workbook.getWorksheet(sheetName);
-  const targetRange = sheet.getUsedRange(true);
-  if (!targetRange) {
-    console.log(`There is no data in the worksheet. `)
-    return;
-  }
-  console.log(`Target Range to clear hyperlinks from: ${targetRange.getAddress()}`);
+  // 遍历所有sheet，去除hyper link
+  for(let sheet of sheets){
+    console.log("现在去除" + sheet.getName());
+    // 获取需要处理的区域
+    const target_range = sheet.getUsedRange(true);
+    if (!target_range) {
+      console.log(`There is no data in the worksheet. `)
+      continue;
+    }
 
-  const rowCount = targetRange.getRowCount();
-  const colCount = targetRange.getColumnCount();
-  const totalCells = rowCount * colCount;
-  if (totalCells > 10000) {
-    console.log("Too many cells to operate with. Consider editing script to use selected range and then remove hyperlinks in batches. " + targetRange.getAddress());
-    return;
+    // 调取处理出去hyperlink函数
+    removeHyperLink(target_range);
+
+    // 将完成的sheet 标记上颜色
+    let colorString = `#${Math.random().toString(16).substr(-6)}`;
+    sheet.setTabColor(colorString);
   }
-  // Call the helper function to remove the hyperlinks. 
-  removeHyperLink(targetRange);
   return;
 }
 
-/**
- * Removes hyperlink for each cell in the target range. Logs the time it takes to complete traversal.
- * @param targetRange Target range to clear the hyperlinks from.
- */
-function removeHyperLink(targetRange: ExcelScript.Range): void {
-  const rowCount = targetRange.getRowCount();
-  const colCount = targetRange.getColumnCount();
-  console.log(`Searching for hyperliinks in ${targetRange.getAddress()} which contains ${(rowCount * colCount)} cells`);
+// 去除hyper link的函数
+function removeHyperLink(target_range: ExcelScript.Range): void {
+  const rowCount = target_range.getRowCount();
+  const colCount = target_range.getColumnCount();
   let clearedCount = 0;
-  let cellsVisited = 0;
 
-  let groupStart = new Date().getTime();
   for (let i = 0; i < rowCount; i++) {
     for (let j = 0; j < colCount; j++) {
-      cellsVisited++;
-      if (cellsVisited % 50 === 0) {
-        let groupEnd = new Date().getTime();
-        console.log(`Completed ${cellsVisited} cells out of ${rowCount * colCount}. This group took: ${(groupEnd - groupStart) / 1000} seconds to complete.`);
-        groupStart = new Date().getTime();
-      }
-      const cell = targetRange.getCell(i, j);
+      const cell = target_range.getCell(i, j);
       const hyperlink = cell.getHyperlink();
       if (hyperlink) {
-        cell.clear(ExcelScript.ClearApplyTo.hyperlinks);
+        // 直接从录制的代码里面拷贝过来
+        cell.clear(ExcelScript.ClearApplyTo.removeHyperlinks);
         cell.getFormat().getFont().setUnderline(ExcelScript.RangeUnderlineStyle.none);
-        cell.getFormat().getFont().setColor('Black');
+        cell.getFormat().getFont().setColor('Red');
         clearedCount++;
       }
     }
   }
-  console.log(`Done. Inspected ${cellsVisited} cells. Clearned hyperlinks in: ${clearedCount} cells`);
+  console.log(`Done. Clearned hyperlinks in: ${clearedCount} cells`);
   return;
 }
